@@ -1,0 +1,185 @@
+{
+  "designSystemApproved": false,
+  "activePage": "index.html",
+  "version": 1,
+  "createdAt": "2026-06-15T01:48:49.614Z",
+  "updatedAt": "2026-06-15T04:53:06.409Z",
+  "frames": [
+    {
+      "id": "index",
+      "kind": "html-file",
+      "title": "Main Canvas",
+      "fileName": "index.html",
+      "x": 0,
+      "y": 0,
+      "width": 1440,
+      "height": 900,
+      "status": "draft",
+      "createdAt": "2026-06-15T02:08:26.374Z",
+      "updatedAt": "2026-06-15T02:15:11.727Z"
+    },
+    {
+      "id": "contentflow-editorial-database",
+      "kind": "snapshot",
+      "title": "ContentFlow — Editorial Database",
+      "url": "http://localhost:5174/index.html",
+      "designUrl": "http://localhost:5174/index.html",
+      "previewUrl": "http://localhost:5174/index.html",
+      "x": 1500,
+      "y": 0,
+      "width": 1440,
+      "height": 900,
+      "status": "active",
+      "source": "imported",
+      "createdAt": "2026-06-15T02:12:42.344Z",
+      "updatedAt": "2026-06-15T04:53:06.409Z"
+    }
+  ],
+  "activeFrameId": "contentflow-editorial-database",
+  "tweaks": [
+    {
+      "control": "preset",
+      "group": "Appearance",
+      "label": "Theme",
+      "presetOptions": [
+        {
+          "label": "Light",
+          "patches": [
+            {
+              "value": "#ffffff",
+              "variable": "--seed-bg"
+            },
+            {
+              "value": "#181d26",
+              "variable": "--seed-fg"
+            },
+            {
+              "value": "#1b61c9",
+              "variable": "--seed-primary"
+            },
+            {
+              "value": "#fcb400",
+              "variable": "--seed-accent"
+            },
+            {
+              "value": "#f8fafc",
+              "variable": "--seed-surface"
+            }
+          ],
+          "value": "light"
+        },
+        {
+          "label": "Dark",
+          "patches": [
+            {
+              "value": "#0f1117",
+              "variable": "--seed-bg"
+            },
+            {
+              "value": "#e8eaed",
+              "variable": "--seed-fg"
+            },
+            {
+              "value": "#4a9eff",
+              "variable": "--seed-primary"
+            },
+            {
+              "value": "#fbbf24",
+              "variable": "--seed-accent"
+            },
+            {
+              "value": "#1a1d27",
+              "variable": "--seed-surface"
+            }
+          ],
+          "value": "dark"
+        },
+        {
+          "label": "Warm Editorial",
+          "patches": [
+            {
+              "value": "#faf8f5",
+              "variable": "--seed-bg"
+            },
+            {
+              "value": "#2c2420",
+              "variable": "--seed-fg"
+            },
+            {
+              "value": "#b45309",
+              "variable": "--seed-primary"
+            },
+            {
+              "value": "#dc2626",
+              "variable": "--seed-accent"
+            },
+            {
+              "value": "#f5f0eb",
+              "variable": "--seed-surface"
+            }
+          ],
+          "value": "warm"
+        },
+        {
+          "label": "Midnight Focus",
+          "patches": [
+            {
+              "value": "#0c0e14",
+              "variable": "--seed-bg"
+            },
+            {
+              "value": "#cdd6f4",
+              "variable": "--seed-fg"
+            },
+            {
+              "value": "#89b4fa",
+              "variable": "--seed-primary"
+            },
+            {
+              "value": "#f9e2af",
+              "variable": "--seed-accent"
+            },
+            {
+              "value": "#181a24",
+              "variable": "--seed-surface"
+            }
+          ],
+          "value": "midnight"
+        }
+      ],
+      "value": "light",
+      "variable": "--appearance-preset"
+    },
+    {
+      "control": "slider",
+      "group": "Density",
+      "label": "Row Density",
+      "max": 1.4,
+      "min": 0.8,
+      "step": 0.1,
+      "value": "1",
+      "variable": "--seed-density"
+    },
+    {
+      "control": "slider",
+      "group": "Shape",
+      "label": "Corner Radius",
+      "max": 16,
+      "min": 2,
+      "step": 1,
+      "unit": "px",
+      "value": "8",
+      "variable": "--seed-radius"
+    },
+    {
+      "control": "slider",
+      "group": "Spacing",
+      "label": "Spacing Scale",
+      "max": 1.5,
+      "min": 0.7,
+      "step": 0.1,
+      "value": "1",
+      "variable": "--seed-spacing"
+    }
+  ]
+}

@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ContentFlow — Editorial Database</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ── Seed tokens (nudges control these) ── */
+:root {
+  --seed-bg: #ffffff;
+  --seed-fg: #181d26;
+  --seed-primary: #1b61c9;
+  --seed-accent: #fcb400;
+  --seed-surface: #f8fafc;
+  --seed-radius: 8;
+  --seed-spacing: 1;
+  --seed-density: 1;
+
+  /* ── Derived tokens ── */
+  --bg: var(--seed-bg);
+  --fg: var(--seed-fg);
+  --fg-weak: color-mix(in srgb, var(--seed-fg) 62%, transparent);
+  --fg-muted: color-mix(in srgb, var(--seed-fg) 40%, transparent);
+  --primary: var(--seed-primary);
+  --primary-soft: color-mix(in srgb, var(--seed-primary) 10%, transparent);
+  --primary-hover: color-mix(in srgb, var(--seed-primary) 85%, black);
+  --accent: var(--seed-accent);
+  --surface: var(--seed-surface);
+  --surface-hover: color-mix(in srgb, var(--seed-surface) 80%, var(--seed-primary) 3%);
+  --border: color-mix(in srgb, var(--seed-fg) 13%, var(--seed-bg));
+  --border-light: color-mix(in srgb, var(--seed-fg) 8%, var(--seed-bg));
+  --shadow-sm: 0 1px 3px color-mix(in srgb, var(--seed-primary) 8%, transparent), 0 0 1px rgba(0,0,0,0.12);
+  --shadow-md: 0 4px 12px color-mix(in srgb, var(--seed-primary) 10%, transparent), 0 0 1px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 30px color-mix(in srgb, var(--seed-primary) 12%, transparent), 0 0 1px rgba(0,0,0,0.1);
+  --radius-sm: calc(var(--seed-radius) * 0.5px);
+  --radius-md: calc(var(--seed-radius) * 1px);
+  --radius-lg: calc(var(--seed-radius) * 1.5px);
+  --radius-xl: calc(var(--seed-radius) * 2px);
+  --sp: calc(var(--seed-spacing) * 8px);
+  --row-h: calc(36px * var(--seed-density));
+
+  /* Status colors */
+  --status-idea: #8b8fa3;
+  --status-idea-bg: color-mix(in srgb, var(--status-idea) 12%, transparent);
+  --status-drafting: #1b61c9;
+  --status-drafting-bg: color-mix(in srgb, var(--status-drafting) 10%, transparent);
+  --status-review: #d97706;
+  --status-review-bg: color-mix(in srgb, var(--status-review) 10%, transparent);
+  --status-published: #16a34a;
+  --status-published-bg: color-mix(in srgb, var(--status-published) 10%, transparent);
+  --status-archived: #9ca3af;
+  --status-archived-bg: color-mix(in srgb, var(--status-archived) 12%, transparent);
+
+  /* Type colors */
+  --type-blog: #1b61c9;
+  --type-blog-bg: color-mix(in srgb, var(--type-blog) 12%, transparent);
+  --type-newsletter: #5b21b6;
+  --type-newsletter-bg: color-mix(in srgb, var(--type-newsletter) 12%, transparent);
+  --type-social: #d63381;
+  --type-social-bg: color-mix(in srgb, var(--type-social) 12%, transparent);
+  --type-video: #dc3545;
+  --type-video-bg: color-mix(in srgb, var(--type-video) 12%, transparent);
+  --type-podcast: #e8590c;
+  --type-podcast-bg: color-mix(in srgb, var(--type-podcast) 12%, transparent);
+
+  /* Avatar colors */
+  --avatar-1: #1b61c9;
+  --avatar-2: #5b21b6;
+  --avatar-3: #d97706;
+  --avatar-4: #16a34a;
+  --avatar-5: #d63381;
+
+  /* Misc tokens */
+  --white: #ffffff;
+  --avatar-border: var(--bg);
+  --focus-ring-alpha: 0.12;
+  --overlay-bg: rgba(0,0,0,0.2);
+  --event-bg-alpha: 0.1;
+
+  /* Font */
+  --font-body: 'Inter', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ── Dark theme seed patches ── */
+[data-theme="dark"] {
+  --seed-bg: #0f1117;
+  --seed-fg: #e8eaed;
+  --seed-primary: #4a9eff;
+  --seed-accent: #fbbf24;
+  --seed-surface: #1a1d27;
+  --border: #2a2d37;
+  --border-light: #22252e;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 0 1px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4), 0 0 1px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.5), 0 0 1px rgba(0,0,0,0.5);
+  --surface-hover: color-mix(in srgb, var(--seed-surface) 90%, var(--seed-primary) 5%);
+  --avatar-1: #4a9eff;
+  --avatar-2: #a78bfa;
+  --avatar-3: #fbbf24;
+  --avatar-4: #34d399;
+  --avatar-5: #f472b6;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-body); color: var(--fg); background: var(--bg); height: 100vh; overflow: hidden; font-size: 14px; line-height: 1.5; letter-spacing: 0; }
+button { font-family: inherit; border: none; background: none; cursor: pointer; color: inherit; font-size: inherit; }
+input, select, textarea { font-family: inherit; font-size: inherit; color: var(--fg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 8px; background: var(--bg); outline: none; }
+input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-soft); }
+
+/* ── App shell ── */
+.app-shell { display: flex; height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 240px; min-width: 240px; background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; transition: width 0.2s ease, min-width 0.2s ease;
+  overflow: hidden; z-index: 20;
+}
+.sidebar.collapsed { width: 52px; min-width: 52px; }
+.sidebar.collapsed .sidebar-label,
+.sidebar.collapsed .sidebar-section-title,
+.sidebar.collapsed .base-name,
+.sidebar.collapsed .table-item span,
+.sidebar.collapsed .view-item span { display: none; }
+.sidebar.collapsed .table-item,
+.sidebar.collapsed .view-item { justify-content: center; padding: 8px; }
+.sidebar.collapsed .sidebar-header { justify-content: center; }
+.sidebar.collapsed .sidebar-header h2 { display: none; }
+
+.sidebar-header {
+  display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-header .logo {
+  width: 26px; height: 26px; border-radius: var(--radius-sm);
+  background: var(--primary); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sidebar-header .logo svg { width: 16px; height: 16px; color: var(--white); }
+.sidebar-header h2 { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.sidebar-toggle {
+  margin-left: auto; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); flex-shrink: 0;
+}
+.sidebar-toggle:hover { background: var(--border-light); }
+.sidebar-toggle svg { width: 14px; height: 14px; color: var(--fg-weak); }
+
+.sidebar-section { padding: 12px 8px 4px; }
+.sidebar-section-title {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--fg-muted); padding: 0 6px 6px;
+}
+.sidebar-nav { list-style: none; }
+.table-item, .view-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  border-radius: var(--radius-sm); font-size: 13px; cursor: pointer;
+  transition: background 0.12s;
+}
+.table-item:hover, .view-item:hover { background: var(--surface-hover); }
+.table-item.active, .view-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 500; }
+.table-item svg, .view-item svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--fg-weak); }
+.table-item.active svg, .view-item.active svg { color: var(--primary); }
+
+/* ── Main area ── */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ── Top bar ── */
+.top-bar {
+  display: flex; align-items: center; gap: 12px; padding: 8px 20px;
+  border-bottom: 1px solid var(--border); background: var(--bg);
+  flex-shrink: 0; min-height: 48px;
+}
+.breadcrumb { font-size: 13px; color: var(--fg-weak); display: flex; align-items: center; gap: 6px; }
+.breadcrumb strong { color: var(--fg); font-weight: 600; }
+.breadcrumb svg { width: 12px; height: 12px; }
+.top-bar-spacer { flex: 1; }
+.top-bar-actions { display: flex; align-items: center; gap: 8px; }
+.btn-share {
+  display: flex; align-items: center; gap: 6px; padding: 5px 14px;
+  background: var(--primary); color: var(--white); border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+.btn-share:hover { background: var(--primary-hover); }
+.btn-share svg { width: 14px; height: 14px; }
+.avatar-stack { display: flex; }
+.avatar-stack .avatar {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--white); margin-left: -6px;
+}
+.avatar-stack .avatar:first-child { margin-left: 0; }
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex; align-items: center; gap: 2px; padding: 6px 20px;
+  border-bottom: 1px solid var(--border); background: var(--bg);
+  flex-shrink: 0;
+}
+.view-tabs { display: flex; gap: 2px; margin-right: 12px; }
+.view-tab {
+  display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+  border-radius: var(--radius-sm); font-size: 13px; font-weight: 450;
+  color: var(--fg-weak); transition: all 0.12s; letter-spacing: 0.01em;
+}
+.view-tab:hover { background: var(--surface); color: var(--fg); }
+.view-tab.active { background: var(--primary-soft); color: var(--primary); font-weight: 500; }
+.view-tab svg { width: 15px; height: 15px; }
+.toolbar-divider { width: 1px; height: 24px; background: var(--border); margin: 0 8px; }
+.toolbar-btn {
+  display: flex; align-items: center; gap: 5px; padding: 5px 10px;
+  border-radius: var(--radius-sm); font-size: 13px; color: var(--fg-weak);
+  transition: all 0.12s;
+}
+.toolbar-btn:hover { background: var(--surface); color: var(--fg); }
+.toolbar-btn svg { width: 14px; height: 14px; }
+.toolbar-search {
+  display: flex; align-items: center; gap: 6px; margin-left: auto;
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--surface); min-width: 200px;
+}
+.toolbar-search svg { width: 14px; height: 14px; color: var(--fg-muted); flex-shrink: 0; }
+.toolbar-search input { border: none; background: transparent; outline: none; font-size: 13px; width: 100%; padding: 2px 0; color: var(--fg); }
+.toolbar-search input::placeholder { color: var(--fg-muted); }
+
+/* ── View container ── */
+.view-container { flex: 1; overflow: hidden; position: relative; }
+.view-panel { position: absolute; inset: 0; overflow: auto; display: none; }
+.view-panel.active { display: flex; flex-direction: column; }
+
+/* ════════════════════════════════════════════
+   GRID VIEW
+   ════════════════════════════════════════════ */
+.grid-wrapper { flex: 1; overflow: auto; }
+.grid-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.grid-table thead { position: sticky; top: 0; z-index: 5; }
+.grid-table th {
+  background: var(--surface); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border-light);
+  padding: 0 12px; height: 34px; font-size: 12px; font-weight: 500;
+  text-align: left; color: var(--fg-weak); letter-spacing: 0.02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 6px; user-select: none;
+}
+.grid-table th:last-child { border-right: none; }
+.grid-table th .field-icon { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.6; }
+.grid-table th.col-rownum { width: 52px; text-align: center; justify-content: center; color: var(--fg-muted); font-size: 11px; }
+.grid-table th.col-checkbox { width: 40px; justify-content: center; }
+
+.grid-table td {
+  border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light);
+  padding: 0 12px; height: var(--row-h); font-size: 13px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  vertical-align: middle; position: relative; transition: background 0.1s;
+}
+.grid-table td:last-child { border-right: none; }
+.grid-table td.col-rownum { text-align: center; color: var(--fg-muted); font-size: 12px; width: 52px; background: var(--surface); cursor: pointer; }
+.grid-table td.col-rownum:hover { background: var(--border-light); }
+.grid-table td.col-checkbox { text-align: center; width: 40px; }
+.grid-table tr:hover td { background: var(--surface-hover); }
+.grid-table tr:hover td.col-rownum { background: var(--border-light); }
+.grid-table td.editing { padding: 0; overflow: visible; }
+.grid-table td.editing input,
+.grid-table td.editing select,
+.grid-table td.editing textarea { width: 100%; height: 100%; border: 2px solid var(--primary); border-radius: 0; padding: 0 10px; font-size: 13px; position: absolute; inset: 0; z-index: 2; background: var(--bg); }
+.grid-table td.editing select { padding: 0 6px; }
+
+/* Cell content */
+.cell-title { font-weight: 450; color: var(--fg); cursor: pointer; }
+.cell-title:hover { color: var(--primary); text-decoration: underline; }
+.cell-status { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 100px; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; }
+.cell-status.idea { background: var(--status-idea-bg); color: var(--status-idea); }
+.cell-status.drafting { background: var(--status-drafting-bg); color: var(--status-drafting); }
+.cell-status.review { background: var(--status-review-bg); color: var(--status-review); }
+.cell-status.published { background: var(--status-published-bg); color: var(--status-published); }
+.cell-status.archived { background: var(--status-archived-bg); color: var(--status-archived); }
+
+.cell-type { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
+.cell-type.blog { background: color-mix(in srgb, var(--type-blog) 12%, transparent); color: var(--type-blog); }
+.cell-type.newsletter { background: color-mix(in srgb, var(--type-newsletter) 12%, transparent); color: var(--type-newsletter); }
+.cell-type.social { background: color-mix(in srgb, var(--type-social) 12%, transparent); color: var(--type-social); }
+.cell-type.video { background: color-mix(in srgb, var(--type-video) 12%, transparent); color: var(--type-video); }
+.cell-type.podcast { background: color-mix(in srgb, var(--type-podcast) 12%, transparent); color: var(--type-podcast); }
+
+.cell-assignee { display: flex; align-items: center; gap: 6px; }
+.cell-assignee .mini-avatar {
+  width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: var(--white); flex-shrink: 0;
+}
+.cell-date { color: var(--fg-weak); font-variant-numeric: tabular-nums; }
+.cell-number { color: var(--fg); font-variant-numeric: tabular-nums; text-align: right; }
+.cell-checkbox { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid var(--border); appearance: none; cursor: pointer; transition: all 0.12s; }
+.cell-checkbox:checked { background: var(--primary); border-color: var(--primary); background-image: url("data:image/svg+xml,%3Csvg width='10' height='8' viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4L3.5 6.5L9 1' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; }
+.cell-attachment { display: flex; gap: 4px; }
+.cell-attachment .thumb { width: 28px; height: 28px; border-radius: var(--radius-sm); background: var(--border-light); display: flex; align-items: center; justify-content: center; }
+.cell-attachment .thumb svg { width: 14px; height: 14px; color: var(--fg-muted); }
+
+.grid-footer { display: flex; align-items: center; padding: 8px 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--fg-muted); gap: 16px; background: var(--bg); }
+
+/* ════════════════════════════════════════════
+   KANBAN VIEW
+   ════════════════════════════════════════════ */
+.kanban-wrapper { flex: 1; display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; }
+.kanban-column {
+  min-width: 280px; width: 280px; flex-shrink: 0; display: flex; flex-direction: column;
+  background: var(--surface); border-radius: var(--radius-lg); overflow: hidden;
+}
+.kanban-column-header {
+  display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+}
+.kanban-column-header .col-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.kanban-column-header .col-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; border-radius: 10px; background: var(--border-light);
+  font-size: 11px; font-weight: 500; color: var(--fg-weak); padding: 0 6px;
+}
+.kanban-column-header .col-spacer { flex: 1; }
+.kanban-column-header .col-add {
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); color: var(--fg-muted); transition: all 0.12s;
+}
+.kanban-column-header .col-add:hover { background: var(--border-light); color: var(--fg); }
+.kanban-cards { flex: 1; overflow-y: auto; padding: 4px 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+
+.kanban-card {
+  background: var(--bg); border-radius: var(--radius-md); padding: 12px;
+  box-shadow: var(--shadow-sm); cursor: pointer; transition: box-shadow 0.15s, transform 0.15s;
+  border: 1px solid var(--border-light);
+}
+.kanban-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.kanban-card-title { font-size: 13px; font-weight: 450; line-height: 1.4; margin-bottom: 8px; color: var(--fg); }
+.kanban-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.kanban-card-tag {
+  display: inline-flex; padding: 1px 7px; border-radius: var(--radius-sm);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
+}
+.kanban-card-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.kanban-card-date { font-size: 11px; color: var(--fg-muted); display: flex; align-items: center; gap: 4px; }
+.kanban-card-date svg { width: 12px; height: 12px; }
+.kanban-card-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--white); }
+.kanban-card-words { font-size: 11px; color: var(--fg-muted); }
+
+/* ════════════════════════════════════════════
+   CALENDAR VIEW
+   ════════════════════════════════════════════ */
+.calendar-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.calendar-header {
+  display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+.calendar-header h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; min-width: 180px; }
+.calendar-nav-btn {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); border: 1px solid var(--border); transition: all 0.12s;
+}
+.calendar-nav-btn:hover { background: var(--surface); border-color: var(--primary); color: var(--primary); }
+.calendar-nav-btn svg { width: 14px; height: 14px; }
+.calendar-today-btn {
+  padding: 4px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; transition: all 0.12s;
+}
+.calendar-today-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+.calendar-grid { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+.calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border); }
+.calendar-weekday {
+  padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--fg-muted); text-align: center;
+}
+.calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; }
+.calendar-day {
+  min-height: 110px; border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);
+  padding: 4px; position: relative; transition: background 0.1s;
+}
+.calendar-day:nth-child(7n) { border-right: none; }
+.calendar-day:hover { background: var(--surface); }
+.calendar-day.other-month { opacity: 0.35; }
+.calendar-day.today { background: var(--primary-soft); }
+.calendar-day-num { font-size: 12px; font-weight: 500; color: var(--fg-weak); padding: 2px 6px; display: block; }
+.calendar-day.today .calendar-day-num { color: var(--primary); font-weight: 600; }
+.calendar-event {
+  display: flex; align-items: center; gap: 4px; padding: 2px 6px; margin: 1px 0;
+  border-radius: var(--radius-sm); font-size: 11px; font-weight: 450;
+  cursor: pointer; transition: opacity 0.12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.calendar-event:hover { opacity: 0.85; }
+.calendar-event .ev-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* ════════════════════════════════════════════
+   RECORD DETAIL PANEL
+   ════════════════════════════════════════════ */
+.record-panel {
+  position: fixed; top: 0; right: 0; width: 480px; max-width: 90vw; height: 100vh;
+  background: var(--bg); box-shadow: var(--shadow-lg); z-index: 100;
+  transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; flex-direction: column; border-left: 1px solid var(--border);
+}
+.record-panel.open { transform: translateX(0); }
+.record-panel-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 99;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.record-panel-overlay.open { opacity: 1; pointer-events: auto; }
+
+.record-panel-header {
+  display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.record-panel-header .panel-type {
+  display: inline-flex; padding: 2px 8px; border-radius: var(--radius-sm);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
+}
+.record-panel-header .panel-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; flex: 1; }
+.panel-close {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); transition: background 0.12s;
+}
+.panel-close:hover { background: var(--surface); }
+.panel-close svg { width: 16px; height: 16px; color: var(--fg-weak); }
+
+.record-panel-body { flex: 1; overflow-y: auto; padding: 20px; }
+.record-field { margin-bottom: 16px; }
+.record-field-label { font-size: 12px; font-weight: 500; color: var(--fg-weak); letter-spacing: 0.02em; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.record-field-label svg { width: 14px; height: 14px; opacity: 0.5; }
+.record-field-value { font-size: 14px; line-height: 1.5; }
+.record-field-value input { width: 100%; padding: 6px 10px; font-size: 14px; }
+.record-field-value textarea { width: 100%; padding: 8px 10px; font-size: 14px; min-height: 80px; resize: vertical; line-height: 1.5; }
+.record-field-value select { width: 100%; padding: 6px 10px; font-size: 14px; }
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .sidebar { width: 52px; min-width: 52px; }
+  .sidebar .sidebar-label, .sidebar .sidebar-section-title,
+  .sidebar .base-name, .sidebar .table-item span, .sidebar .view-item span { display: none; }
+  .sidebar .table-item, .sidebar .view-item { justify-content: center; padding: 8px; }
+  .sidebar .sidebar-header { justify-content: center; }
+  .sidebar .sidebar-header h2 { display: none; }
+  .kanban-column { min-width: 260px; width: 260px; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--fg-muted); }
+
+/* ── Utility ── */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+</style>
+</head>
+<body>
+<div class="app-shell" data-component="app-shell" data-od-id="app-shell">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar" data-component="sidebar" data-od-id="sidebar" aria-label="Navigation">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </div>
+      <h2>ContentFlow</h2>
+      <button class="sidebar-toggle" aria-label="Toggle sidebar" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title sidebar-label">Tables</div>
+      <ul class="sidebar-nav" role="list">
+        <li class="table-item active" data-component="nav-table" role="listitem" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/></svg>
+          <span>Editorial Planner</span>
+        </li>
+        <li class="table-item" data-component="nav-table" role="listitem" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Team Members</span>
+        </li>
+        <li class="table-item" data-component="nav-table" role="listitem" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Content Calendar</span>
+        </li>
+        <li class="table-item" data-component="nav-table" role="listitem" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>Analytics</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title sidebar-label">Views</div>
+      <ul class="sidebar-nav" role="list">
+        <li class="view-item active" data-view="grid" data-component="nav-view" role="listitem" tabindex="0" onclick="switchView('grid')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+          <span>Grid</span>
+        </li>
+        <li class="view-item" data-view="kanban" data-component="nav-view" role="listitem" tabindex="0" onclick="switchView('kanban')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+          <span>Kanban</span>
+        </li>
+        <li class="view-item" data-view="calendar" data-component="nav-view" role="listitem" tabindex="0" onclick="switchView('calendar')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg>
+          <span>Calendar</span>
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN AREA ═══ -->
+  <main class="main-area" data-component="main-area" data-od-id="main-area">
+
+    <!-- Top bar -->
+    <header class="top-bar" data-component="top-bar" data-od-id="top-bar">
+      <div class="breadcrumb">
+        <span>ContentFlow</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+        <strong>Editorial Planner</strong>
+      </div>
+      <div class="top-bar-spacer"></div>
+      <div class="top-bar-actions">
+        <div class="avatar-stack" aria-label="Team members">
+          <div class="avatar" style="background:var(--avatar-1);" title="Sarah Chen">SC</div>
+          <div class="avatar" style="background:var(--avatar-2);" title="Marcus Rivera">MR</div>
+          <div class="avatar" style="background:var(--avatar-3);" title="Aisha Patel">AP</div>
+          <div class="avatar" style="background:var(--avatar-4);" title="James O'Brien">JO</div>
+        </div>
+        <button class="btn-share" data-component="btn-share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+      </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar" data-component="toolbar" data-od-id="toolbar">
+      <div class="view-tabs" role="tablist" aria-label="View selector">
+        <button class="view-tab active" data-view="grid" role="tab" aria-selected="true" onclick="switchView('grid')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          Grid
+        </button>
+        <button class="view-tab" data-view="kanban" role="tab" aria-selected="false" onclick="switchView('kanban')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+          Kanban
+        </button>
+        <button class="view-tab" data-view="calendar" role="tab" aria-selected="false" onclick="switchView('calendar')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Calendar
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <button class="toolbar-btn" data-component="btn-filter" aria-label="Filter records">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"/></svg>
+        Filter
+      </button>
+      <button class="toolbar-btn" data-component="btn-sort" aria-label="Sort records">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19,12 12,19 5,12"/></svg>
+        Sort
+      </button>
+      <button class="toolbar-btn" data-component="btn-group" aria-label="Group records">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Group
+      </button>
+
+      <div class="toolbar-search" data-component="search-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" placeholder="Search records..." aria-label="Search records" id="searchInput" oninput="handleSearch(this.value)" />
+      </div>
+    </div>
+
+    <!-- Views -->
+    <div class="view-container" data-component="view-container">
+      <div class="view-panel active" id="gridView" data-component="grid-view" data-od-id="grid-view" role="tabpanel" aria-label="Grid view">
+        <div class="grid-wrapper" id="gridWrapper"></div>
+        <div class="grid-footer" data-component="grid-footer">
+          <span id="recordCount">18 records</span>
+          <span id="filterInfo"></span>
+        </div>
+      </div>
+      <div class="view-panel" id="kanbanView" data-component="kanban-view" data-od-id="kanban-view" role="tabpanel" aria-label="Kanban view">
+        <div class="kanban-wrapper" id="kanbanWrapper"></div>
+      </div>
+      <div class="view-panel" id="calendarView" data-component="calendar-view" data-od-id="calendar-view" role="tabpanel" aria-label="Calendar view">
+        <div class="calendar-wrapper" id="calendarWrapper"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Record Detail Panel -->
+<div class="record-panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+<div class="record-panel" id="recordPanel" data-component="record-panel" data-od-id="record-panel" role="dialog" aria-label="Record details">
+  <div class="record-panel-header">
+    <span class="panel-type" id="panelType"></span>
+    <span class="panel-title" id="panelTitle"></span>
+    <button class="panel-close" aria-label="Close panel" onclick="closePanel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="record-panel-body" id="panelBody"></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   DATA
+   ════════════════════════════════════════════ */
+const STATUSES = ['Idea','Drafting','In Review','Published','Archived'];
+const TYPES = ['Blog','Newsletter','Social','Video','Podcast'];
+const ASSIGNEES = [
+  { name:'Sarah Chen', initials:'SC', color:'var(--avatar-1)' },
+  { name:'Marcus Rivera', initials:'MR', color:'var(--avatar-2)' },
+  { name:'Aisha Patel', initials:'AP', color:'var(--avatar-3)' },
+  { name:"James O'Brien", initials:'JO', color:'var(--avatar-4)' },
+  { name:'Lena Kowalski', initials:'LK', color:'var(--avatar-5)' },
+];
+
+const records = [
+  { id:1, title:'Q3 Product Launch Announcement', status:'Drafting', type:'Blog', assignee:0, date:'2026-06-18', words:1200, featured:true, notes:'Coordinate with product team for screenshots and quotes.' },
+  { id:2, title:'Weekly Digest — June Week 3', status:'In Review', type:'Newsletter', assignee:1, date:'2026-06-20', words:850, featured:false, notes:'Include roundup of new integrations.' },
+  { id:3, title:'Behind the Scenes: How We Built v4', status:'Idea', type:'Blog', assignee:0, date:'2026-06-25', words:2000, featured:true, notes:'Long-form narrative. Interview engineering leads.' },
+  { id:4, title:'Instagram Reel: Feature Highlights', status:'Drafting', type:'Social', assignee:2, date:'2026-06-16', words:60, featured:false, notes:'15-second format. Focus on collaboration features.' },
+  { id:5, title:'Customer Story: Acme Corp Migration', status:'Published', type:'Blog', assignee:3, date:'2026-06-10', words:1500, featured:true, notes:'Acme approved final draft. Photos cleared by legal.' },
+  { id:6, title:'Podcast Ep 47: Future of Work Tools', status:'Drafting', type:'Podcast', assignee:1, date:'2026-06-22', words:0, featured:false, notes:'Guest: VP of Product at TechCo. Record Thursday.' },
+  { id:7, title:'LinkedIn Thought Leadership Post', status:'Idea', type:'Social', assignee:4, date:'2026-07-01', words:200, featured:false, notes:'Topic: asynchronous collaboration in distributed teams.' },
+  { id:8, title:'Video Tutorial: Advanced Automations', status:'In Review', type:'Video', assignee:2, date:'2026-06-19', words:0, featured:true, notes:'Screen recording done. Editing in progress.' },
+  { id:9, title:'SEO Guide: Content Planning at Scale', status:'Published', type:'Blog', assignee:0, date:'2026-06-05', words:3200, featured:true, notes:'Ranking for 12 target keywords. 4.2K views first week.' },
+  { id:10, title:'Monthly Metrics Newsletter — June', status:'Idea', type:'Newsletter', assignee:1, date:'2026-06-30', words:600, featured:false, notes:'Pull data from analytics dashboard. Add commentary.' },
+  { id:11, title:'Twitter Thread: 10 Productivity Tips', status:'Published', type:'Social', assignee:4, date:'2026-06-08', words:350, featured:false, notes:'Engaged 12K impressions. 340 retweets.' },
+  { id:12, title:'Webinar Recap Blog Post', status:'Drafting', type:'Blog', assignee:3, date:'2026-06-24', words:1000, featured:false, notes:'Summarize key takeaways from Tuesday webinar.' },
+  { id:13, title:'YouTube: Getting Started Guide', status:'Archived', type:'Video', assignee:2, date:'2026-05-15', words:0, featured:false, notes:'Replaced by v4 onboarding series.' },
+  { id:14, title:'Partner Co-marketing Email Blast', status:'In Review', type:'Newsletter', assignee:1, date:'2026-06-21', words:400, featured:false, notes:'Joint send with DataStack. A/B test subject lines.' },
+  { id:15, title:'TikTok Series: Day in the Life', status:'Idea', type:'Social', assignee:2, date:'2026-07-05', words:0, featured:false, notes:'3-part series featuring the design team.' },
+  { id:16, title:'Podcast Ep 48: Data-Driven Content', status:'Idea', type:'Podcast', assignee:1, date:'2026-07-03', words:0, featured:false, notes:'Potential guest: Head of Analytics at MediaCo.' },
+  { id:17, title:'Case Study: Startup Scaling Playbook', status:'Published', type:'Blog', assignee:3, date:'2026-06-03', words:2400, featured:true, notes:'Featured in partner newsletter. 890 downloads.' },
+  { id:18, title:'Year-in-Review Video Script', status:'Archived', type:'Video', assignee:4, date:'2026-05-28', words:1800, featured:false, notes:'Shelved until Q4 planning. Keep outline.' },
+];
+
+let currentView = 'grid';
+let searchQuery = '';
+let filteredRecords = [...records];
+
+/* ════════════════════════════════════════════
+   FIELD DEFINITIONS
+   ════════════════════════════════════════════ */
+const fields = [
+  { key:'title', label:'Title', type:'text', width:'260px', icon:'text' },
+  { key:'status', label:'Status', type:'select', width:'120px', icon:'select' },
+  { key:'type', label:'Type', type:'select', width:'110px', icon:'tag' },
+  { key:'assignee', label:'Assignee', type:'collaborator', width:'150px', icon:'user' },
+  { key:'date', label:'Publish Date', type:'date', width:'120px', icon:'calendar' },
+  { key:'words', label:'Word Count', type:'number', width:'100px', icon:'number' },
+  { key:'featured', label:'Featured', type:'checkbox', width:'80px', icon:'check' },
+  { key:'notes', label:'Notes', type:'text', width:'220px', icon:'text' },
+];
+
+/* ════════════════════════════════════════════
+   SVG ICONS (inline, monoline, currentColor)
+   ════════════════════════════════════════════ */
+const fieldIcons = {
+  text: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,7 4,4 20,4 20,7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>',
+  select: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"/></svg>',
+  tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  number: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"/></svg>',
+  image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>',
+};
+
+/* ════════════════════════════════════════════
+   GRID VIEW RENDER
+   ════════════════════════════════════════════ */
+function renderGrid() {
+  const wrapper = document.getElementById('gridWrapper');
+  let html = '<table class="grid-table" data-component="grid-table"><thead><tr>';
+  html += '<th class="col-rownum" style="width:52px">#</th>';
+  html += '<th class="col-checkbox" style="width:40px"><input type="checkbox" class="cell-checkbox" aria-label="Select all" onclick="toggleSelectAll(this)" /></th>';
+  fields.forEach(f => {
+    html += `<th style="width:${f.width}" data-component="grid-col-header"><span class="field-icon">${fieldIcons[f.icon]}</span>${f.label}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  filteredRecords.forEach((r, i) => {
+    html += `<tr data-record-id="${r.id}" data-component="grid-row" onclick="openRecord(${r.id})">`;
+    html += `<td class="col-rownum">${i + 1}</td>`;
+    html += `<td class="col-checkbox" onclick="event.stopPropagation()"><input type="checkbox" class="cell-checkbox" aria-label="Select row ${i+1}" /></td>`;
+
+    // Title
+    html += `<td><span class="cell-title">${esc(r.title)}</span></td>`;
+
+    // Status
+    const sc = statusClass(r.status);
+    html += `<td><span class="cell-status ${sc}">${r.status}</span></td>`;
+
+    // Type
+    const tc = typeClass(r.type);
+    html += `<td><span class="cell-type ${tc}">${r.type}</span></td>`;
+
+    // Assignee
+    const a = ASSIGNEES[r.assignee];
+    html += `<td><span class="cell-assignee"><span class="mini-avatar" style="background:${a.color}">${a.initials}</span>${a.name}</span></td>`;
+
+    // Date
+    html += `<td><span class="cell-date">${formatDate(r.date)}</span></td>`;
+
+    // Words
+    html += `<td><span class="cell-number">${r.words > 0 ? r.words.toLocaleString() : '—'}</span></td>`;
+
+    // Featured
+    html += `<td onclick="event.stopPropagation()"><input type="checkbox" class="cell-checkbox" ${r.featured ? 'checked' : ''} aria-label="Featured" onchange="toggleFeatured(${r.id}, this.checked)" /></td>`;
+
+    // Notes
+    html += `<td><span style="color:var(--fg-weak);">${esc(truncate(r.notes, 40))}</span></td>`;
+
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  wrapper.innerHTML = html;
+
+  document.getElementById('recordCount').textContent = `${filteredRecords.length} record${filteredRecords.length !== 1 ? 's' : ''}`;
+  document.getElementById('filterInfo').textContent = searchQuery ? `Filtered by "${searchQuery}"` : '';
+}
+
+/* ════════════════════════════════════════════
+   KANBAN VIEW RENDER
+   ════════════════════════════════════════════ */
+function renderKanban() {
+  const wrapper = document.getElementById('kanbanWrapper');
+  const statusColors = { 'Idea':'var(--status-idea)', 'Drafting':'var(--status-drafting)', 'In Review':'var(--status-review)', 'Published':'var(--status-published)', 'Archived':'var(--status-archived)' };
+
+  let html = '';
+  STATUSES.forEach(status => {
+    const cards = filteredRecords.filter(r => r.status === status);
+    html += `<div class="kanban-column" data-component="kanban-column" data-od-id="kanban-col-${status.toLowerCase().replace(/\s/g,'-')}">`;
+    html += `<div class="kanban-column-header">`;
+    html += `<span class="col-dot" style="background:${statusColors[status]}"></span>`;
+    html += `${status}`;
+    html += `<span class="col-count" aria-label="${cards.length} cards">${cards.length}</span>`;
+    html += `<span class="col-spacer"></span>`;
+    html += `<button class="col-add" aria-label="Add card to ${status}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`;
+    html += `</div>`;
+    html += `<div class="kanban-cards" data-component="kanban-cards">`;
+
+    cards.forEach(r => {
+      const a = ASSIGNEES[r.assignee];
+      const tc = typeClass(r.type);
+      html += `<div class="kanban-card" data-component="kanban-card" data-od-id="card-${r.id}" onclick="openRecord(${r.id})">`;
+      html += `<div class="kanban-card-title">${esc(r.title)}</div>`;
+      html += `<div class="kanban-card-meta">`;
+      html += `<span class="kanban-card-tag ${tc}" style="background:${typeColorBg(r.type)};color:${typeColor(r.type)}">${r.type}</span>`;
+      if (r.featured) html += `<span class="kanban-card-tag" style="background:color-mix(in srgb, var(--seed-accent) 15%, transparent);color:var(--seed-accent)">Featured</span>`;
+      html += `</div>`;
+      html += `<div class="kanban-card-bottom">`;
+      html += `<span class="kanban-card-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${formatDateShort(r.date)}</span>`;
+      if (r.words > 0) html += `<span class="kanban-card-words">${r.words.toLocaleString()}w</span>`;
+      html += `<span class="kanban-card-avatar" style="background:${a.color}" title="${a.name}">${a.initials}</span>`;
+      html += `</div>`;
+      html += `</div>`;
+    });
+
+    html += `</div></div>`;
+  });
+  wrapper.innerHTML = html;
+}
+
+/* ════════════════════════════════════════════
+   CALENDAR VIEW RENDER
+   ════════════════════════════════════════════ */
+let calendarDate = new Date(2026, 5, 1); // June 2026
+
+function renderCalendar() {
+  const wrapper = document.getElementById('calendarWrapper');
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const statusColors = { 'Idea':'var(--status-idea)', 'Drafting':'var(--status-drafting)', 'In Review':'var(--status-review)', 'Published':'var(--status-published)', 'Archived':'var(--status-archived)' };
+
+  let html = `<div class="calendar-header" data-component="calendar-header">`;
+  html += `<button class="calendar-nav-btn" aria-label="Previous month" onclick="navCalendar(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,18 9,12 15,6"/></svg></button>`;
+  html += `<h3>${monthNames[month]} ${year}</h3>`;
+  html += `<button class="calendar-nav-btn" aria-label="Next month" onclick="navCalendar(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,18 15,12 9,6"/></svg></button>`;
+  html += `<button class="calendar-today-btn" onclick="goToday()">Today</button>`;
+  html += `</div>`;
+
+  html += `<div class="calendar-grid"><div class="calendar-weekdays">`;
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+    html += `<div class="calendar-weekday">${d}</div>`;
+  });
+  html += `</div><div class="calendar-days">`;
+
+  // Previous month fill
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = daysInPrevMonth - i;
+    html += `<div class="calendar-day other-month"><span class="calendar-day-num">${d}</span></div>`;
+  }
+
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const dayRecords = filteredRecords.filter(r => r.date === dateStr);
+
+    html += `<div class="calendar-day${isToday ? ' today' : ''}">`;
+    html += `<span class="calendar-day-num">${d}</span>`;
+    dayRecords.forEach(r => {
+      const color = statusColors[r.status];
+      html += `<div class="calendar-event" style="background:color-mix(in srgb, ${color} 12%, transparent);color:${color}" onclick="openRecord(${r.id})" data-component="calendar-event">`;
+      html += `<span class="ev-dot" style="background:${color}"></span>`;
+      html += esc(truncate(r.title, 22));
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Next month fill
+  const totalCells = firstDay + daysInMonth;
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="calendar-day other-month"><span class="calendar-day-num">${i}</span></div>`;
+  }
+
+  html += `</div></div>`;
+  wrapper.innerHTML = html;
+}
+
+/* ════════════════════════════════════════════
+   RECORD DETAIL PANEL
+   ════════════════════════════════════════════ */
+function openRecord(id) {
+  const r = records.find(rec => rec.id === id);
+  if (!r) return;
+  const a = ASSIGNEES[r.assignee];
+
+  const tc = typeClass(r.type);
+  document.getElementById('panelType').className = 'panel-type ' + tc;
+  document.getElementById('panelType').style.background = typeColorBg(r.type);
+  document.getElementById('panelType').style.color = typeColor(r.type);
+  document.getElementById('panelType').textContent = r.type;
+  document.getElementById('panelTitle').textContent = r.title;
+
+  let html = '';
+  // Title
+  html += `<div class="record-field" data-component="record-field">`;
+  html += `<div class="record-field-label"><span class="field-icon">${fieldIcons.text}</span>Title</div>`;
+  html += `<div class="record-field-value"><input type="text" value="${esc(r.title)}" onchange="updateRecord(${r.id},'title',this.value)" /></div>`;
+  html += `</div>`;
+  // Status
+  html += `<div class="record-field" data-component="record-field">`;
+  html += `<div class="record-field-label"><span class="field-icon">${fieldIcons.select}</span>Status</div>`;
+  html += `<div class="record-field-value"><select onchange="updateRecord(${r.id},'status',this.value)">`;
+  STATUSES.forEach(s => html += `<option ${s===r.status?'selected':''}>${s}</option>`);
+  html += `</select></div></div>`;
+  // Type
+  html += `<div class="record-field" data-component="record-field">`;
+  html += `<div class="record-field-label"><span class="field-icon">${fieldIcons.tag}</span>Type</div>`;
+  html += `<div class="record-field-value"><select onchange="updateRecord(${r.id},'type',this.value)">`;
+  TYPES.forEach(t => html += `<option ${t===r.type?'selected':''}>${t}</option>`);
+  html += `</select></div></div>`;
+  // Assignee
+  html += `<div class="record-field" data-component="record-field">`;
+  html += `<div class="record-field-label"><span class="field-icon">${fieldIcons.user}</span>Assignee</div>`;
+  html += `<div class="record-field-value"><span class="cell-assignee"><span class="mini-avatar" style="background:${a.color}">${a.initials}</span>${a.name}</span></div>`;
+  html += `</div>`;
+  // Date
+  html += `<div class="record-field" data-component="record-field">`;
+  html += `<div class="record-field-label"><span class="field-icon">${fieldIcons.calendar}</span>Publish Date</div>`;
+  html += `<div class="record-field-value"><input type="date" value="${r.date}" onchange="updateRecord(${r.id},'date',this.value)" /></div>`;
+  html += `</div>`;
+  // Word Count
+  html += `<div class="record-field" data-component="record-field">`;
+  html += `<div class="record-field-label"><span class="field-icon">${fieldIcons.number}</span>Word Count</div>`;
+  html += `<div class="record-field-value"><input type="number" value="${r.words}" min="0" step="50" onchange="updateRecord(${r.id},'words',parseInt(this.value)||0)" /></div>`;
+  html += `</div>`;
+  // Featured
+  html += `<div class="record-field" data-component="record-field">`;
+  html += `<div class="record-field-label"><span class="field-icon">${fieldIcons.check}</span>Featured</div>`;
+  html += `<div class="record-field-value"><input type="checkbox" class="cell-checkbox" ${r.featured?'checked':''} onchange="updateRecord(${r.id},'featured',this.checked)" style="width:18px;height:18px;" /></div>`;
+  html += `</div>`;
+  // Notes
+  html += `<div class="record-field" data-component="record-field">`;
+  html += `<div class="record-field-label"><span class="field-icon">${fieldIcons.text}</span>Notes</div>`;
+  html += `<div class="record-field-value"><textarea onchange="updateRecord(${r.id},'notes',this.value)">${esc(r.notes)}</textarea></div>`;
+  html += `</div>`;
+
+  document.getElementById('panelBody').innerHTML = html;
+  document.getElementById('recordPanel').classList.add('open');
+  document.getElementById('panelOverlay').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('recordPanel').classList.remove('open');
+  document.getElementById('panelOverlay').classList.remove('open');
+}
+
+/* ════════════════════════════════════════════
+   INTERACTIONS
+   ════════════════════════════════════════════ */
+function switchView(view) {
+  currentView = view;
+
+  // Update tabs
+  document.querySelectorAll('.view-tab').forEach(t => {
+    const isActive = t.dataset.view === view;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive);
+  });
+
+  // Update sidebar views
+  document.querySelectorAll('.view-item').forEach(v => {
+    v.classList.toggle('active', v.dataset.view === view);
+  });
+
+  // Show/hide panels
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(view + 'View').classList.add('active');
+
+  // Render
+  if (view === 'grid') renderGrid();
+  else if (view === 'kanban') renderKanban();
+  else if (view === 'calendar') renderCalendar();
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('collapsed');
+}
+
+function handleSearch(query) {
+  searchQuery = query.toLowerCase().trim();
+  if (!searchQuery) {
+    filteredRecords = [...records];
+  } else {
+    filteredRecords = records.filter(r =>
+      r.title.toLowerCase().includes(searchQuery) ||
+      r.status.toLowerCase().includes(searchQuery) ||
+      r.type.toLowerCase().includes(searchQuery) ||
+      ASSIGNEES[r.assignee].name.toLowerCase().includes(searchQuery) ||
+      r.notes.toLowerCase().includes(searchQuery)
+    );
+  }
+  renderAll();
+}
+
+function updateRecord(id, field, value) {
+  const r = records.find(rec => rec.id === id);
+  if (r) {
+    r[field] = value;
+    handleSearch(searchQuery); // re-filter
+    // Re-render active view
+    if (currentView === 'grid') renderGrid();
+    else if (currentView === 'kanban') renderKanban();
+    else if (currentView === 'calendar') renderCalendar();
+  }
+}
+
+function toggleFeatured(id, checked) {
+  updateRecord(id, 'featured', checked);
+}
+
+function navCalendar(delta) {
+  calendarDate.setMonth(calendarDate.getMonth() + delta);
+  renderCalendar();
+}
+
+function goToday() {
+  calendarDate = new Date(2026, 5, 1);
+  renderCalendar();
+}
+
+function renderAll() {
+  if (currentView === 'grid') renderGrid();
+  else if (currentView === 'kanban') renderKanban();
+  else if (currentView === 'calendar') renderCalendar();
+}
+
+/* ════════════════════════════════════════════
+   HELPERS
+   ════════════════════════════════════════════ */
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function truncate(s, n) {
+  return s.length > n ? s.slice(0, n) + '...' : s;
+}
+
+function statusClass(s) {
+  if (s === 'Idea') return 'idea';
+  if (s === 'Drafting') return 'drafting';
+  if (s === 'In Review') return 'review';
+  if (s === 'Published') return 'published';
+  if (s === 'Archived') return 'archived';
+  return '';
+}
+
+function typeClass(t) {
+  return t.toLowerCase();
+}
+
+function typeColor(t) {
+  const map = { Blog:'var(--type-blog)', Newsletter:'var(--type-newsletter)', Social:'var(--type-social)', Video:'var(--type-video)', Podcast:'var(--type-podcast)' };
+  return map[t] || 'var(--fg-muted)';
+}
+
+function typeColorBg(t) {
+  const map = { Blog:'var(--type-blog-bg)', Newsletter:'var(--type-newsletter-bg)', Social:'var(--type-social-bg)', Video:'var(--type-video-bg)', Podcast:'var(--type-podcast-bg)' };
+  return map[t] || 'var(--surface)';
+}
+
+function formatDate(d) {
+  const date = new Date(d + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function formatDateShort(d) {
+  const date = new Date(d + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+
+function toggleSelectAll(checkbox) {
+  document.querySelectorAll('.grid-table tbody .cell-checkbox').forEach(cb => {
+    cb.checked = checkbox.checked;
+  });
+}
+
+// Keyboard: Escape closes panel
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePanel();
+});
+
+/* ════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════ */
+renderGrid();
+
+/* ── Auto dark-mode detection for nudge themes ── */
+(function() {
+  const root = document.documentElement;
+  function checkTheme() {
+    const bg = getComputedStyle(root).getPropertyValue('--seed-bg').trim();
+    if (bg.startsWith('#')) {
+      const hex = bg.replace('#','');
+      const r = parseInt(hex.substr(0,2),16);
+      const g = parseInt(hex.substr(2,2),16);
+      const b = parseInt(hex.substr(4,2),16);
+      const luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+      root.setAttribute('data-theme', luminance < 0.45 ? 'dark' : 'light');
+    }
+  }
+  new MutationObserver(checkTheme).observe(root, { attributes: true, attributeFilter: ['style'] });
+  checkTheme();
+})();
+</script>
+</body>
+</html>

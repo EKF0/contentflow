@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-15T01:49:00.000Z",
+  "brief": {
+    "artifactType": "app-ui",
+    "targetPlatform": [
+      "web",
+      "responsive"
+    ],
+    "audience": "Content teams, editors, and marketers who manage editorial workflows",
+    "businessGoal": "Provide a powerful, polished multi-view database for content/editorial workflows that rivals and surpasses Airtable in usability and visual quality",
+    "productType": "database/spreadsheet app"
+  },
+  "output": {
+    "target": "html",
+    "componentLibrary": "none",
+    "previewStrategy": "Generate a Canvas HTML workspace file after generation tools are enabled."
+  },
+  "resources": {
+    "skill": {
+      "id": "kanban-board",
+      "title": "kanban-board",
+      "rationale": "Best fit for multi-view database app with kanban board as one of the three core views",
+      "alternatives": [
+        "dashboard"
+      ]
+    },
+    "styleReference": {
+      "primary": "airtable",
+      "inspiration": [
+        "stripe",
+        "supabase"
+      ],
+      "rationale": "User explicitly selected Airtable design system; Stripe and Supabase provide supplementary polish cues for toolbars, color, and spacing"
+    },
+    "requiredReads": [
+      {
+        "kind": "skill",
+        "id": "kanban-board",
+        "reason": "Selected Canvas skill checklist."
+      },
+      {
+        "kind": "design-system",
+        "id": "airtable",
+        "reason": "Primary style reference — Airtable design system."
+      },
+      {
+        "kind": "craft",
+        "id": "anti-ai-slop",
+        "reason": "Baseline AI-slop guardrail."
+      },
+      {
+        "kind": "craft",
+        "id": "typography",
+        "reason": "Baseline typography quality."
+      },
+      {
+        "kind": "craft",
+        "id": "color",
+        "reason": "Baseline color quality."
+      },
+      {
+        "kind": "protocol",
+        "id": "design-mode-runtime",
+        "reason": "Runtime contract."
+      },
+      {
+        "kind": "protocol",
+        "id": "skill-protocol",
+        "reason": "Skill metadata contract."
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "index.html",
+      "action": "create",
+      "purpose": "Complete single-file Airtable-like database application for content/editorial workflow management, featuring Grid, Kanban, and Calendar views with interactive data editing",
+      "requirements": [
+        "Sidebar navigation with bases/tables list, matching Airtable's left sidebar pattern",
+        "Grid view: full editable spreadsheet with column headers, field types (text, select/status, date, collaborator, attachment thumbnail, checkbox), row numbering, and column resize handles",
+        "Kanban view: cards grouped by status columns (Idea, Drafting, In Review, Published, Archived) with drag-ready card UI, cover thumbnails, tags, and metadata",
+        "Calendar view: monthly calendar layout with content pieces placed on their publish dates, color-coded by status or content type",
+        "View switcher toolbar with Grid/Kanban/Calendar toggle tabs, plus filter/sort/group controls",
+        "Sample editorial dataset: ~15-20 rows with realistic content titles, authors, statuses, content types (Blog, Newsletter, Social, Video, Podcast), publish dates, word counts, and assignees",
+        "Expandable record detail panel/modal when clicking a row or card",
+        "Top bar with base name, breadcrumbs, share button, and user avatars",
+        "Field type icons and color-coded status pills consistent with Airtable's visual language",
+        "Responsive layout that works on desktop and tablet widths",
+        "All interactions handled via vanilla JS — view switching, inline editing, record expansion, sidebar collapse"
+      ]
+    }
+  ],
+  "designDirection": {
+    "fidelity": "high-fidelity",
+    "styleSource": "airtable",
+    "visualTone": [
+      "clean",
+      "data-dense",
+      "professional",
+      "colorful-accents"
+    ],
+    "designSystemId": "airtable"
+  },
+  "structure": {
+    "screens": [
+      "Main app shell with sidebar, toolbar, and view area",
+      "Grid view — editable data table",
+      "Kanban view — status-grouped card board",
+      "Calendar view — monthly calendar with event cards",
+      "Record detail expand — side panel or modal for full record view"
+    ],
+    "sections": [
+      "Left sidebar: workspace/base switcher, table list, view list",
+      "Top toolbar: view tabs (Grid/Kanban/Calendar), search, filter, sort, group, share",
+      "Main content: switches between grid, kanban, and calendar based on active view tab",
+      "Record detail: slide-in panel from right with all fields editable"
+    ]
+  },
+  "interaction": {
+    "primaryFlow": "User navigates to the content base, switches between Grid/Kanban/Calendar views, edits records inline or via the detail panel, and filters/groups content by status, type, or assignee",
+    "states": [
+      "Default: Grid view loaded with sample editorial data",
+      "View switch: animated tab transition between Grid, Kanban, Calendar",
+      "Inline edit: click cell to edit, blur to save",
+      "Record expanded: side panel slides in with full record details",
+      "Filtered/sorted: toolbar controls adjust visible rows or card groupings",
+      "Sidebar collapsed: icon-only sidebar for more workspace room"
+    ]
+  },
+  "quality": {
+    "responsive": true,
+    "accessibility": true,
+    "lintRequired": true,
+    "acceptanceCriteria": [
+      "All three views (Grid, Kanban, Calendar) render correctly with the same underlying dataset",
+      "View switching is instant with no page reload",
+      "Grid cells are editable with appropriate input types per field",
+      "Status pills use distinct, accessible colors matching Airtable conventions",
+      "Calendar shows content items on correct dates with status color coding",
+      "Kanban cards show key metadata (title, type tag, assignee avatar, due date)",
+      "Record detail panel shows all fields and allows editing",
+      "No text overlap, clipping, or broken layout at 1280px and above",
+      "Design quality check has P0=0 and all P1 issues are fixed or explicitly waived"
+    ]
+  },
+  "risks": [
+    "Single HTML file may be large — mitigate with efficient CSS and minimal inline assets",
+    "Calendar view complexity — use a clean CSS grid approach rather than a heavy library",
+    "Inline editing across field types needs careful JS handling"
+  ],
+  "abstract": "This plan creates a high-fidelity, Airtable-inspired database application tailored for content and editorial teams. The single-file HTML app will feature three fully interactive views — Grid (editable spreadsheet), Kanban (status-grouped card board), and Calendar (monthly publish schedule) — all driven by a realistic sample dataset of editorial content. The design follows the Airtable design system for visual language, with sidebar navigation, a view-switching toolbar, and expandable record detail panels. Before approving, confirm that the three-view scope, editorial dataset, and Airtable visual direction match your vision."
+}
