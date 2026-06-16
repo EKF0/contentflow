@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { Sidebar, type SidebarSection } from './sidebar';
 import { TopBar } from './top-bar';
 import { Toolbar } from './toolbar';
@@ -13,6 +14,7 @@ import { SocialScheduler } from '@/components/social-scheduler';
 import { AnalyticsDashboard } from '@/components/analytics-dashboard';
 import { useSearch } from '@/hooks/use-search';
 import { useViews } from '@/hooks/use-views';
+import { cn } from '@/lib/utils';
 import type { ContentRecord } from '@/types';
 import type { FilterState, SortState, GroupState } from '@/hooks/use-search';
 import type { ViewState } from '@/hooks/use-views';
@@ -59,6 +61,8 @@ function AppShell() {
   const [importOpen, setImportOpen] = useState(false);
   const [saveViewModalOpen, setSaveViewModalOpen] = useState(false);
   const [viewNameInput, setViewNameInput] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const saveViewModalRef = useFocusTrap(saveViewModalOpen);
 
   const viewsState = useViews();
 
@@ -125,20 +129,49 @@ function AppShell() {
   const handleViewSwitch = useCallback(
     (view: ViewType) => {
       setActiveView(view);
+      setSidebarOpen(false);
       viewsState.resetView();
     },
     [viewsState],
   );
 
+  const handleSectionChange = useCallback(
+    (section: SidebarSection) => {
+      setActiveSection(section);
+      setSidebarOpen(false);
+    },
+    [],
+  );
+
   return (
     <div className="flex h-screen">
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        socialPostCount={socialPostCount}
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+
+      {/* Mobile sidebar backdrop */}
+      <div
+        className={cn(
+          'fixed inset-0 z-30 bg-black/40 transition-opacity md:hidden',
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+        )}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
       />
-      <main className="flex flex-1 flex-col overflow-hidden min-w-0">
-        <TopBar />
+
+      {/* Sidebar - always rendered, hidden on mobile via props */}
+      <div className={cn(
+        'fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 md:relative md:transform-none',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+      )}>
+        <Sidebar
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+          socialPostCount={socialPostCount}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
+
+      <main id="main-content" className="flex flex-1 flex-col overflow-hidden min-w-0" role="main">
+        <TopBar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         {activeSection === 'editorial' && (
           <>
             <Toolbar
@@ -207,6 +240,63 @@ function AppShell() {
         )}
       </main>
 
+      {/* Mobile bottom navigation */}
+      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+        {(['grid', 'kanban', 'calendar'] as ViewType[]).map((view) => (
+          <button
+            key={view}
+            onClick={() => handleViewSwitch(view)}
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[10px] transition-colors',
+              activeView === view
+                ? 'text-[var(--primary)]'
+                : 'text-[var(--fg-muted)]',
+            )}
+          >
+            {view === 'grid' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+              </svg>
+            )}
+            {view === 'kanban' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <rect x="3" y="3" width="5" height="18" rx="1" />
+                <rect x="10" y="3" width="5" height="12" rx="1" />
+                <rect x="17" y="3" width="5" height="15" rx="1" />
+              </svg>
+            )}
+            {view === 'calendar' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            )}
+            <span className="capitalize">{view}</span>
+          </button>
+        ))}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[10px] text-[var(--fg-muted)]"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <circle cx="12" cy="5" r="1" />
+            <circle cx="19" cy="5" r="1" />
+            <circle cx="5" cy="5" r="1" />
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="19" cy="12" r="1" />
+            <circle cx="5" cy="12" r="1" />
+            <circle cx="12" cy="19" r="1" />
+            <circle cx="19" cy="19" r="1" />
+            <circle cx="5" cy="19" r="1" />
+          </svg>
+          <span>More</span>
+        </button>
+      </nav>
+
       <ImportModal
         open={importOpen}
         onClose={() => setImportOpen(false)}
@@ -216,10 +306,10 @@ function AppShell() {
 
       {/* Save View Modal */}
       {saveViewModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/40" onClick={() => setSaveViewModalOpen(false)} />
-          <div className="relative bg-[var(--bg)] border border-[var(--border)] rounded-xl shadow-[var(--shadow-lg)] w-full max-w-[360px] p-5">
-            <h3 className="text-[15px] font-semibold text-[var(--fg)] mb-3">Save View</h3>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Save view">
+          <div className="fixed inset-0 bg-black/40" onClick={() => setSaveViewModalOpen(false)} aria-hidden="true" />
+          <div ref={saveViewModalRef} tabIndex={-1} className="relative bg-[var(--bg)] border border-[var(--border)] rounded-xl shadow-[var(--shadow-lg)] w-full max-w-[360px] p-5">
+            <h3 className="text-[15px] font-semibold text-[var(--fg)] mb-3" id="save-view-title">Save View</h3>
             <input
               type="text"
               placeholder="View name..."
@@ -230,6 +320,7 @@ function AppShell() {
                 if (e.key === 'Escape') setSaveViewModalOpen(false);
               }}
               autoFocus
+              aria-labelledby="save-view-title"
               className="w-full border border-[var(--border)] rounded-[var(--radius-md)] px-3 py-2 text-[13px] text-[var(--fg)] bg-[var(--surface)] focus:outline-none focus:border-[var(--primary)]"
             />
             <div className="flex justify-end gap-2 mt-4">

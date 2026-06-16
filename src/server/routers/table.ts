@@ -53,6 +53,10 @@ const FIELD_TYPES = [
   'phone',
   'attachment',
   'formula',
+  'link',
+  'multi_link',
+  'lookup',
+  'rollup',
 ] as const;
 
 export const tableRouter = router({

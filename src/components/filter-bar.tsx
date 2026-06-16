@@ -106,6 +106,7 @@ function FilterBar({ filters, onFiltersChange, className }: FilterBarProps) {
               <button
                 onClick={clearAllFilters}
                 className="text-[12px] text-[var(--primary)] hover:text-[var(--primary-hover)] font-medium"
+                aria-label="Clear all filters"
               >
                 Clear all
               </button>
@@ -113,6 +114,8 @@ function FilterBar({ filters, onFiltersChange, className }: FilterBarProps) {
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="text-[var(--fg-muted)] hover:text-[var(--fg)]"
+              aria-label={isExpanded ? 'Collapse filters' : 'Expand filters'}
+              aria-expanded={isExpanded}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -183,12 +186,14 @@ function FilterBar({ filters, onFiltersChange, className }: FilterBarProps) {
                 type="date"
                 value={filters.dateRange?.start || ''}
                 onChange={(e) => handleDateRangeChange('start', e.target.value)}
+                aria-label="Start date"
                 className="w-full border border-[var(--border)] rounded-[var(--radius-sm)] px-2 py-1 text-[12px] text-[var(--fg)] bg-[var(--bg)]"
               />
               <input
                 type="date"
                 value={filters.dateRange?.end || ''}
                 onChange={(e) => handleDateRangeChange('end', e.target.value)}
+                aria-label="End date"
                 className="w-full border border-[var(--border)] rounded-[var(--radius-sm)] px-2 py-1 text-[12px] text-[var(--fg)] bg-[var(--bg)]"
               />
             </div>

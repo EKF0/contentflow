@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 type AvatarSize = 'sm' | 'md' | 'lg';
@@ -18,7 +19,7 @@ interface AvatarProps {
   className?: string;
 }
 
-function Avatar({ initials, color, name, size = 'md', className }: AvatarProps) {
+const Avatar = memo(function Avatar({ initials, color, name, size = 'md', className }: AvatarProps) {
   return (
     <div
       className={cn(
@@ -28,20 +29,21 @@ function Avatar({ initials, color, name, size = 'md', className }: AvatarProps) 
       )}
       style={{ background: color }}
       title={name}
+      aria-label={name || initials}
     >
       {initials}
     </div>
   );
-}
+});
 
 interface AvatarStackProps {
   members: { initials: string; color: string; name: string }[];
   className?: string;
 }
 
-function AvatarStack({ members, className }: AvatarStackProps) {
+const AvatarStack = memo(function AvatarStack({ members, className }: AvatarStackProps) {
   return (
-    <div className={cn('flex', className)} aria-label="Team members">
+    <div className={cn('flex', className)} aria-label={`Team members: ${members.map(m => m.name).join(', ')}`}>
       {members.map((member, i) => (
         <div
           key={member.name}
@@ -55,12 +57,13 @@ function AvatarStack({ members, className }: AvatarStackProps) {
             borderColor: 'var(--bg)',
           }}
           title={member.name}
+          aria-label={member.name}
         >
           {member.initials}
         </div>
       ))}
     </div>
   );
-}
+});
 
 export { Avatar, AvatarStack, type AvatarSize };

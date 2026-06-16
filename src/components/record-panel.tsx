@@ -10,9 +10,12 @@ import { FieldIcon, type IconType } from '@/components/ui/field-icon';
 import { FileUpload } from '@/components/file-upload';
 import { AttachmentList } from '@/components/attachment-list';
 import { CommentSection } from '@/components/comment-section';
+import { AIAssistantToolbar } from '@/components/ai-assistant-toolbar';
+import { AIAssistant } from '@/components/ai-assistant';
 import { trpc } from '@/lib/trpc/client';
 
 type Tab = 'details' | 'attachments' | 'comments';
+type AssistantAction = 'rewrite' | 'expand' | 'summarize' | 'improve' | 'seo';
 
 interface RecordPanelProps {
   record: ContentRecord | null;
@@ -172,6 +175,111 @@ function DetailsTab({
   assignee: { name: string; initials: string; color: string };
   onUpdate: (recordId: number, field: keyof ContentRecord, value: unknown) => void;
 }) {
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+  const [toolbarVisible, setToolbarVisible] = useState(false);
+  const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
+  const [selectedText, setSelectedText] = useState('');
+  const [selectedRange, setSelectedRange] = useState<{ start: number; end: number } | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantAction, setAssistantAction] = useState<AssistantAction | null>(null);
+
+  const handleTextSelect = useCallback(() => {
+    const textarea = notesRef.current;
+    if (!textarea) return;
+
+    const text = textarea.value.substring(
+      textarea.selectionStart,
+      textarea.selectionEnd,
+    );
+    const trimmedText = text.trim();
+
+    if (trimmedText.length > 2) {
+      setSelectedText(trimmedText);
+      setSelectedRange({
+        start: textarea.selectionStart,
+        end: textarea.selectionEnd,
+      });
+
+      const rect = textarea.getBoundingClientRect();
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rangeRect = range.getBoundingClientRect();
+        setToolbarPosition({
+          top: rangeRect.top - 48,
+          left: rangeRect.left + rangeRect.width / 2,
+        });
+      } else {
+        setToolbarPosition({
+          top: rect.top - 48,
+          left: rect.left + rect.width / 2,
+        });
+      }
+      setToolbarVisible(true);
+    } else {
+      setToolbarVisible(false);
+    }
+  }, []);
+
+  const handleToolbarAction = useCallback(
+    (action: AssistantAction, _text: string) => {
+      setToolbarVisible(false);
+      setAssistantAction(action);
+      setAssistantOpen(true);
+    },
+    [],
+  );
+
+  const handleToolbarDismiss = useCallback(() => {
+    setToolbarVisible(false);
+  }, []);
+
+  const handleUseResult = useCallback(
+    (newText: string) => {
+      const textarea = notesRef.current;
+      if (!textarea || !selectedRange) {
+        onUpdate(record.id, 'notes', (record.notes || '') + '\n\n' + newText);
+        return;
+      }
+
+      const before = textarea.value.substring(0, selectedRange.start);
+      const after = textarea.value.substring(selectedRange.end);
+      const updated = before + newText + after;
+      onUpdate(record.id, 'notes', updated);
+
+      setAssistantOpen(false);
+      setSelectedText('');
+      setSelectedRange(null);
+    },
+    [record.id, record.notes, selectedRange, onUpdate],
+  );
+
+  const handleCloseAssistant = useCallback(() => {
+    setAssistantOpen(false);
+    setAssistantAction(null);
+  }, []);
+
+  useEffect(() => {
+    const textarea = notesRef.current;
+    if (!textarea) return;
+
+    textarea.addEventListener('mouseup', handleTextSelect);
+    textarea.addEventListener('keyup', (e) => {
+      if (e.shiftKey) handleTextSelect();
+    });
+
+    return () => {
+      textarea.removeEventListener('mouseup', handleTextSelect);
+      textarea.removeEventListener('keyup', handleTextSelect);
+    };
+  }, [handleTextSelect]);
+
+  useEffect(() => {
+    if (!assistantOpen) {
+      setAssistantAction(null);
+    }
+  }, [assistantOpen]);
+
   return (
     <>
       <FieldRow icon="text" label="Title">
@@ -244,13 +352,41 @@ function DetailsTab({
       </FieldRow>
 
       <FieldRow icon="text" label="Notes">
-        <textarea
-          value={record.notes}
-          onChange={(e) => onUpdate(record.id, 'notes', e.target.value)}
-          rows={4}
-          className="w-full resize-y rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg)] px-2.5 py-2 text-sm leading-relaxed text-[var(--fg)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-soft)]"
-        />
+        <div className="relative">
+          <textarea
+            ref={notesRef}
+            value={record.notes}
+            onChange={(e) => onUpdate(record.id, 'notes', e.target.value)}
+            rows={4}
+            className="w-full resize-y rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg)] px-2.5 py-2 text-sm leading-relaxed text-[var(--fg)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-soft)]"
+            placeholder="Type or paste text, then select it to use the AI assistant..."
+          />
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[var(--fg-muted)]">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+            Select text to use AI assistant
+          </div>
+        </div>
       </FieldRow>
+
+      {/* AI Assistant Toolbar */}
+      <AIAssistantToolbar
+        visible={toolbarVisible}
+        position={toolbarPosition}
+        selectedText={selectedText}
+        onAction={handleToolbarAction}
+        onDismiss={handleToolbarDismiss}
+      />
+
+      {/* AI Assistant Panel */}
+      <AIAssistant
+        open={assistantOpen}
+        onClose={handleCloseAssistant}
+        selectedText={selectedText}
+        originalText={record.notes || ''}
+        onUseResult={handleUseResult}
+      />
     </>
   );
 }

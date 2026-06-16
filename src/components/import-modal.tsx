@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import {
   parseCSV,
   parseJSON,
@@ -35,6 +36,7 @@ function ImportModal({ open, onClose, onImport, existingRecords }: ImportModalPr
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const focusTrapRef = useFocusTrap(open);
 
   const reset = useCallback(() => {
     setStep('upload');
@@ -162,9 +164,9 @@ function ImportModal({ open, onClose, onImport, existingRecords }: ImportModalPr
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/40" onClick={handleClose} />
-      <div className="relative bg-[var(--bg)] border border-[var(--border)] rounded-xl shadow-[var(--shadow-lg)] w-full max-w-[720px] max-h-[85vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Import data">
+      <div className="fixed inset-0 bg-black/40" onClick={handleClose} aria-hidden="true" />
+      <div ref={focusTrapRef} tabIndex={-1} className="relative bg-[var(--bg)] border border-[var(--border)] rounded-xl shadow-[var(--shadow-lg)] w-full max-w-[720px] max-h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
           <div>
@@ -177,6 +179,7 @@ function ImportModal({ open, onClose, onImport, existingRecords }: ImportModalPr
           </div>
           <button
             onClick={handleClose}
+            aria-label="Close import dialog"
             className="p-1.5 rounded-[var(--radius-sm)] text-[var(--fg-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] transition-colors"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">

@@ -109,6 +109,10 @@ export const fields = pgTable(
         'phone',
         'attachment',
         'formula',
+        'link',
+        'multi_link',
+        'lookup',
+        'rollup',
       ],
     }).notNull(),
     config: jsonb('config').$defaultFn(() => ({})),
@@ -464,6 +468,142 @@ export const webhookDeliveries = pgTable(
   ],
 );
 
+// ─── Record Links ───────────────────────────────────────────────────────────
+
+export const recordLinks = pgTable(
+  'record_links',
+  {
+    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    sourceRecordId: text('source_record_id')
+      .notNull()
+      .references(() => records.id, { onDelete: 'cascade' }),
+    targetRecordId: text('target_record_id')
+      .notNull()
+      .references(() => records.id, { onDelete: 'cascade' }),
+    fieldName: text('field_name').notNull(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('idx_record_links_source').on(t.sourceRecordId),
+    index('idx_record_links_target').on(t.targetRecordId),
+    index('idx_record_links_field').on(t.fieldName),
+    index('idx_record_links_workspace').on(t.workspaceId),
+  ],
+);
+
+// ─── Automations ─────────────────────────────────────────────────────────────
+
+export const automations = pgTable(
+  'automations',
+  {
+    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    trigger: text('trigger', {
+      enum: ['status_change', 'date_arrived', 'field_updated', 'created'],
+    }).notNull(),
+    conditions: jsonb('conditions').$defaultFn(() => []),
+    actions: jsonb('actions').notNull().$defaultFn(() => []),
+    isActive: boolean('is_active').notNull().default(true),
+    createdBy: text('created_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('idx_automations_workspace').on(t.workspaceId),
+    index('idx_automations_active').on(t.workspaceId, t.isActive),
+  ],
+);
+
+// ─── Content Links ───────────────────────────────────────────────────────────
+
+export const contentLinks = pgTable(
+  'content_links',
+  {
+    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    sourceRecordId: text('source_record_id')
+      .notNull()
+      .references(() => records.id, { onDelete: 'cascade' }),
+    targetRecordId: text('target_record_id')
+      .notNull()
+      .references(() => records.id, { onDelete: 'cascade' }),
+    linkType: text('link_type', {
+      enum: ['derivative', 'inspiration', 'reference'],
+    }).notNull().default('derivative'),
+    status: text('status', {
+      enum: ['synced', 'outdated', 'orphaned'],
+    }).notNull().default('synced'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('idx_content_links_source').on(t.sourceRecordId),
+    index('idx_content_links_target').on(t.targetRecordId),
+    index('idx_content_links_type').on(t.linkType),
+  ],
+);
+
+// ─── Subscriptions ────────────────────────────────────────────────────────────
+
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    stripeCustomerId: text('stripe_customer_id').unique(),
+    stripeSubscriptionId: text('stripe_subscription_id').unique(),
+    tier: text('tier', { enum: ['free', 'pro', 'team', 'enterprise'] })
+      .notNull()
+      .default('free'),
+    status: text('status', { enum: ['active', 'canceled', 'past_due'] })
+      .notNull()
+      .default('active'),
+    currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('idx_subscriptions_user').on(t.userId),
+    index('idx_subscriptions_stripe_customer').on(t.stripeCustomerId),
+    index('idx_subscriptions_stripe_sub').on(t.stripeSubscriptionId),
+  ],
+);
+
+// ─── Invoices ────────────────────────────────────────────────────────────────
+
+export const invoices = pgTable(
+  'invoices',
+  {
+    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    subscriptionId: text('subscription_id')
+      .references(() => subscriptions.id, { onDelete: 'set null' }),
+    stripeInvoiceId: text('stripe_invoice_id').unique(),
+    amount: integer('amount').notNull(),
+    currency: text('currency').notNull().default('usd'),
+    status: text('status', {
+      enum: ['draft', 'open', 'paid', 'uncollectible', 'void'],
+    }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('idx_invoices_user').on(t.userId),
+    index('idx_invoices_subscription').on(t.subscriptionId),
+    index('idx_invoices_stripe').on(t.stripeInvoiceId),
+  ],
+);
+
 // ─── Re-exports for convenience ───────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -502,3 +642,13 @@ export type Webhook = typeof webhooks.$inferSelect;
 export type NewWebhook = typeof webhooks.$inferInsert;
 export type WebhookDelivery = typeof webhookDeliveries.$inferSelect;
 export type NewWebhookDelivery = typeof webhookDeliveries.$inferInsert;
+export type RecordLink = typeof recordLinks.$inferSelect;
+export type NewRecordLink = typeof recordLinks.$inferInsert;
+export type Automation = typeof automations.$inferSelect;
+export type NewAutomation = typeof automations.$inferInsert;
+export type ContentLink = typeof contentLinks.$inferSelect;
+export type NewContentLink = typeof contentLinks.$inferInsert;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
+export type Invoice = typeof invoices.$inferSelect;
+export type NewInvoice = typeof invoices.$inferInsert;

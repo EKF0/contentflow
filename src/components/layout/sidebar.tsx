@@ -10,6 +10,7 @@ interface SidebarProps {
   activeSection?: SidebarSection;
   onSectionChange?: (section: SidebarSection) => void;
   socialPostCount?: number;
+  onClose?: () => void;
 }
 
 function Sidebar({ className, activeSection = 'editorial', onSectionChange, socialPostCount = 0 }: SidebarProps) {

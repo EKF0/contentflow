@@ -104,6 +104,128 @@ export async function generateSocialSnippets(
   return { stream };
 }
 
+export async function rewriteText(
+  text: string,
+  tone: 'formal' | 'casual' | 'concise' | 'professional',
+): Promise<StreamingResult> {
+  const openai = getOpenAI();
+  const stream = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    stream: true,
+    messages: [
+      {
+        role: 'system',
+        content: `You are an expert content editor. Rewrite the following text in a ${tone} tone while preserving the original meaning and key information. Return ONLY the rewritten text, no markdown formatting, no explanations.`,
+      },
+      {
+        role: 'user',
+        content: text,
+      },
+    ],
+    temperature: 0.7,
+    max_tokens: 2000,
+  });
+
+  return { stream };
+}
+
+export async function expandText(bulletPoints: string): Promise<StreamingResult> {
+  const openai = getOpenAI();
+  const stream = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    stream: true,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a skilled content writer. Expand the following bullet points or short notes into well-written, flowing paragraphs. Maintain the original meaning while adding depth, transitions, and natural flow. Return ONLY the expanded text, no markdown, no explanations.',
+      },
+      {
+        role: 'user',
+        content: bulletPoints,
+      },
+    ],
+    temperature: 0.7,
+    max_tokens: 2000,
+  });
+
+  return { stream };
+}
+
+export async function summarizeText(
+  text: string,
+  maxLength?: number,
+): Promise<StreamingResult> {
+  const openai = getOpenAI();
+  const lengthInstruction = maxLength
+    ? `Keep the summary under ${maxLength} words.`
+    : 'Keep it concise — around 2-3 sentences.';
+  const stream = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    stream: true,
+    messages: [
+      {
+        role: 'system',
+        content: `You are an expert summarizer. Summarize the following text clearly and accurately. ${lengthInstruction} Return ONLY the summary, no markdown, no explanations.`,
+      },
+      {
+        role: 'user',
+        content: text,
+      },
+    ],
+    temperature: 0.5,
+    max_tokens: 500,
+  });
+
+  return { stream };
+}
+
+export async function suggestSEO(
+  title: string,
+  content: string,
+): Promise<StreamingResult> {
+  const openai = getOpenAI();
+  const stream = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    stream: true,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an SEO expert. Analyze the given title and content to suggest SEO improvements. Return a JSON object with: "keywords" (array of 5-8 relevant SEO keywords), "metaDescription" (a compelling meta description under 160 characters), and "suggestions" (2-3 specific SEO improvement tips). Return ONLY the JSON, no markdown.',
+      },
+      {
+        role: 'user',
+        content: `Title: "${title}"\n\nContent: "${content.slice(0, 2000)}"`,
+      },
+    ],
+    temperature: 0.6,
+    max_tokens: 800,
+  });
+
+  return { stream };
+}
+
+export async function improveWriting(text: string): Promise<StreamingResult> {
+  const openai = getOpenAI();
+  const stream = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    stream: true,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a professional editor. Improve the writing quality of the following text by fixing grammar, improving clarity, enhancing word choice, and strengthening sentence structure. Preserve the original meaning and tone. Return ONLY the improved text, no markdown, no explanations, no diff.',
+      },
+      {
+        role: 'user',
+        content: text,
+      },
+    ],
+    temperature: 0.5,
+    max_tokens: 2000,
+  });
+
+  return { stream };
+}
+
 export interface StreamingTitleResult {
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
 }
@@ -117,6 +239,10 @@ export interface StreamingTagsResult {
 }
 
 export interface StreamingSocialResult {
+  stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
+}
+
+export interface StreamingResult {
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
 }
 

@@ -164,3 +164,190 @@ textarea:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--fg-muted);
 }
+
+/* Mobile-first responsive utilities */
+:root {
+  --mobile-nav-h: 56px;
+  --touch-target: 44px;
+}
+
+/* Touch-friendly defaults */
+@media (pointer: coarse) {
+  :root {
+    --row-h: 48px;
+  }
+  button, a, [role="tab"] {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
+}
+
+/* Hide columns on mobile that are less important */
+@media (max-width: 768px) {
+  .hide-mobile { display: none !important; }
+  .grid-table .col-featured,
+  .grid-table .col-notes,
+  .grid-table .col-words { display: none !important; }
+  .grid-table { table-layout: auto !important; }
+  .grid-table th,
+  .grid-table td { padding-left: 8px; padding-right: 8px; }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hide-tablet { display: none !important; }
+}
+
+/* Accessibility: visible focus styles */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Remove default focus outline, use focus-visible instead */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 0 0 var(--radius-md) 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Accessibility: reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .swipe-hint {
+    animation: none;
+  }
+
+  .animate-spin {
+    animation: none;
+  }
+
+  .sheet-enter {
+    animation: none;
+  }
+
+  .sheet-exit {
+    animation: none;
+  }
+
+  .transition-all,
+  .transition-colors,
+  .transition-transform {
+    transition: none !important;
+  }
+}
+
+/* Accessibility: high contrast mode support */
+@media (forced-colors: active) {
+  .cell-checkbox {
+    forced-color-adjust: none;
+  }
+
+  [role="status"],
+  [role="listitem"] {
+    forced-color-adjust: none;
+  }
+}
+
+/* Smooth momentum scrolling on touch */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* Swipe hint animation */
+@keyframes swipe-hint {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-8px); }
+}
+
+.swipe-hint {
+  animation: swipe-hint 1.5s ease-in-out 1;
+}
+
+/* Pull-to-refresh indicator */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Bottom sheet drag handle */
+.drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+/* Bottom sheet animations */
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes sheet-slide-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.sheet-enter {
+  animation: sheet-slide-up 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.sheet-exit {
+  animation: sheet-slide-down 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Mobile bottom nav */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    height: var(--mobile-nav-h);
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    align-items: center;
+    justify-content: space-around;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  body {
+    padding-bottom: var(--mobile-nav-h);
+  }
+}

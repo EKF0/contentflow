@@ -76,12 +76,21 @@ function Toolbar({
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSortMenuOpen(false);
+        setGroupMenuOpen(false);
+      }
+    };
+
     if (sortMenuOpen || groupMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [sortMenuOpen, groupMenuOpen]);
 
@@ -206,12 +215,13 @@ function Toolbar({
             active={sort.field !== null}
           />
           {sortMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-md)] shadow-[var(--shadow-md)] z-50 min-w-[180px] py-1">
-              <div className="px-3 py-1.5 text-[11px] font-medium text-[var(--fg-muted)] uppercase tracking-wider">
+            <div className="absolute top-full left-0 mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-md)] shadow-[var(--shadow-md)] z-50 min-w-[180px] py-1" role="menu" aria-label="Sort options">
+              <div className="px-3 py-1.5 text-[11px] font-medium text-[var(--fg-muted)] uppercase tracking-wider" role="presentation">
                 Sort by
               </div>
               <button
                 onClick={() => handleSortSelect(null)}
+                role="menuitem"
                 className={cn(
                   'w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)]',
                   sort.field === null && 'text-[var(--primary)] font-medium',
@@ -223,6 +233,7 @@ function Toolbar({
                 <button
                   key={f.key}
                   onClick={() => handleSortSelect(f.key)}
+                  role="menuitem"
                   className={cn(
                     'w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)] flex items-center justify-between',
                     sort.field === f.key && 'text-[var(--primary)] font-medium',
@@ -230,7 +241,7 @@ function Toolbar({
                 >
                   <span>{f.label}</span>
                   {sort.field === f.key && (
-                    <span className="text-[var(--fg-muted)]">{sort.direction === 'asc' ? '↑' : '↓'}</span>
+                    <span className="text-[var(--fg-muted)]" aria-hidden="true">{sort.direction === 'asc' ? '↑' : '↓'}</span>
                   )}
                 </button>
               ))}
@@ -254,12 +265,13 @@ function Toolbar({
             active={group.field !== null}
           />
           {groupMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-md)] shadow-[var(--shadow-md)] z-50 min-w-[180px] py-1">
-              <div className="px-3 py-1.5 text-[11px] font-medium text-[var(--fg-muted)] uppercase tracking-wider">
+            <div className="absolute top-full left-0 mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-md)] shadow-[var(--shadow-md)] z-50 min-w-[180px] py-1" role="menu" aria-label="Group options">
+              <div className="px-3 py-1.5 text-[11px] font-medium text-[var(--fg-muted)] uppercase tracking-wider" role="presentation">
                 Group by
               </div>
               <button
                 onClick={() => handleGroupSelect(null)}
+                role="menuitem"
                 className={cn(
                   'w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)]',
                   group.field === null && 'text-[var(--primary)] font-medium',
@@ -271,6 +283,7 @@ function Toolbar({
                 <button
                   key={f.key}
                   onClick={() => handleGroupSelect(f.key)}
+                  role="menuitem"
                   className={cn(
                     'w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)]',
                     group.field === f.key && 'text-[var(--primary)] font-medium',
@@ -366,6 +379,8 @@ function ToolbarButton({ icon, label, onClick, active = false, badge }: ToolbarB
           ? 'bg-[var(--primary-soft)] text-[var(--primary)] font-medium'
           : 'text-[var(--fg-weak)] hover:bg-[var(--surface)] hover:text-[var(--fg)]',
       )}
+      aria-label={label}
+      aria-haspopup="menu"
     >
       <span className="[&>svg]:h-3.5 [&>svg]:w-3.5">{icon}</span>
       {label}

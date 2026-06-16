@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import type { Status, ContentType } from '@/types';
 
@@ -33,7 +34,7 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-function StatusBadge({ status, showDot = false, className }: StatusBadgeProps) {
+const StatusBadge = memo(function StatusBadge({ status, showDot = false, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
@@ -41,6 +42,8 @@ function StatusBadge({ status, showDot = false, className }: StatusBadgeProps) {
         statusStyles[status],
         className,
       )}
+      role="status"
+      aria-label={`Status: ${status}`}
     >
       {showDot && (
         <span
@@ -48,19 +51,20 @@ function StatusBadge({ status, showDot = false, className }: StatusBadgeProps) {
             'h-2 w-2 rounded-full flex-shrink-0',
             statusDotColors[status],
           )}
+          aria-hidden="true"
         />
       )}
       {status}
     </span>
   );
-}
+});
 
 interface TypeTagProps {
   type: ContentType;
   className?: string;
 }
 
-function TypeTag({ type, className }: TypeTagProps) {
+const TypeTag = memo(function TypeTag({ type, className }: TypeTagProps) {
   return (
     <span
       className={cn(
@@ -68,10 +72,11 @@ function TypeTag({ type, className }: TypeTagProps) {
         typeStyles[type],
         className,
       )}
+      aria-label={`Type: ${type}`}
     >
       {type}
     </span>
   );
-}
+});
 
 export { StatusBadge, TypeTag, statusDotColors };

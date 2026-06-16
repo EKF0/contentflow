@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 type IconType = 'text' | 'select' | 'tag' | 'user' | 'calendar' | 'number' | 'check' | 'image' | 'attachment';
@@ -19,7 +20,19 @@ const icons: Record<IconType, string> = {
   attachment: 'M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48',
 };
 
-function FieldIcon({ type, className }: FieldIconProps) {
+const iconLabels: Record<IconType, string> = {
+  text: 'Text',
+  select: 'Select',
+  tag: 'Tag',
+  user: 'User',
+  calendar: 'Calendar',
+  number: 'Number',
+  check: 'Checkbox',
+  image: 'Image',
+  attachment: 'Attachment',
+};
+
+const FieldIcon = memo(function FieldIcon({ type, className }: FieldIconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -29,10 +42,11 @@ function FieldIcon({ type, className }: FieldIconProps) {
       strokeLinecap="round"
       strokeLinejoin="round"
       className={cn('h-3.5 w-3.5 flex-shrink-0 opacity-60', className)}
+      aria-hidden="true"
     >
       <path d={icons[type]} />
     </svg>
   );
-}
+});
 
-export { FieldIcon, type IconType };
+export { FieldIcon, type IconType, iconLabels };

@@ -11,6 +11,9 @@ import { notificationRouter } from './notification';
 import { apiKeyRouter } from './api-key';
 import { webhookRouter } from './webhook';
 import { commentRouter } from './comment';
+import { formulaRouter } from './formula';
+import { linkRouter } from './link';
+import { billingRouter } from './billing';
 
 export const appRouter = router({
   health: publicProcedure.query(() => {
@@ -29,6 +32,9 @@ export const appRouter = router({
   apiKey: apiKeyRouter,
   webhook: webhookRouter,
   comment: commentRouter,
+  formula: formulaRouter,
+  link: linkRouter,
+  billing: billingRouter,
 });
 
 export type AppRouter = typeof appRouter;

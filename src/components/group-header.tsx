@@ -27,6 +27,8 @@ function GroupHeader({ groupName, count, color, children, defaultExpanded = true
           'w-full flex items-center gap-3 px-5 py-2.5 border-b border-[var(--border-light)] hover:bg-[var(--surface-hover)] transition-colors',
           'sticky top-0 z-10',
         )}
+        aria-expanded={isExpanded}
+        aria-label={`${groupName} group, ${count} records`}
         style={{
           backgroundColor: `color-mix(in srgb, ${color} 8%, var(--bg))`,
         }}
@@ -34,6 +36,7 @@ function GroupHeader({ groupName, count, color, children, defaultExpanded = true
         <div
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: color }}
+          aria-hidden="true"
         />
         <span className="text-[13px] font-medium text-[var(--fg)]">{groupName}</span>
         <span className="text-[12px] text-[var(--fg-muted)]">{count} records</span>
@@ -48,6 +51,7 @@ function GroupHeader({ groupName, count, color, children, defaultExpanded = true
             'h-4 w-4 text-[var(--fg-muted)] ml-auto transition-transform',
             isExpanded && 'rotate-180',
           )}
+          aria-hidden="true"
         >
           <polyline points="6,9 12,15 18,9" />
         </svg>

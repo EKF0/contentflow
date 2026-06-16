@@ -66,7 +66,23 @@ export const attachmentConfigSchema = z.object({
 
 export const formulaConfigSchema = z.object({
   expression: z.string().default(''),
+  returnType: z.enum(['text', 'number', 'date']).default('text'),
   referencedFields: z.array(z.string()).default([]),
+});
+
+export const linkConfigSchema = z.object({
+  linkedTableId: z.string(),
+  linkedFieldName: z.string().optional(),
+  multiple: z.boolean().default(false),
+});
+
+export const rollupConfigSchema = z.object({
+  linkedFieldId: z.string(),
+  aggregation: z.enum(['count', 'sum', 'min', 'max', 'list']).default('count'),
+});
+
+export const lookupConfigSchema = z.object({
+  linkedFieldId: z.string(),
 });
 
 // ─── Value Validation Schemas ────────────────────────────────────────────────
@@ -105,7 +121,11 @@ export type FieldType =
   | 'email'
   | 'phone'
   | 'attachment'
-  | 'formula';
+  | 'formula'
+  | 'link'
+  | 'multi_link'
+  | 'lookup'
+  | 'rollup';
 
 export interface FieldTypeInfo {
   id: FieldType;
@@ -407,6 +427,67 @@ export const FIELD_TYPES: Record<FieldType, FieldTypeInfo> = {
     category: 'computed',
     configSchema: formulaConfigSchema,
     defaultValue: () => '',
+    validate: () => true,
+    formatValue: (value) => String(value ?? ''),
+    parseValue: (raw) => raw,
+  },
+  link: {
+    id: 'link',
+    label: 'Link',
+    description: 'Single record link',
+    icon: 'Link',
+    category: 'advanced',
+    configSchema: linkConfigSchema,
+    defaultValue: () => null,
+    validate: () => true,
+    formatValue: (value) => {
+      if (!value || typeof value !== 'object') return '';
+      const v = value as { recordId?: string; title?: string };
+      return v.title ?? v.recordId ?? '';
+    },
+    parseValue: (raw) => {
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    },
+  },
+  multi_link: {
+    id: 'multi_link',
+    label: 'Multi-Link',
+    description: 'Multiple record links',
+    icon: 'Link2',
+    category: 'advanced',
+    configSchema: linkConfigSchema,
+    defaultValue: () => [],
+    validate: (value) => Array.isArray(value) || value === null,
+    formatValue: (value) => {
+      if (!Array.isArray(value)) return '';
+      return `${value.length} linked record${value.length !== 1 ? 's' : ''}`;
+    },
+    parseValue: (raw) => {
+      if (!raw) return [];
+      try { return JSON.parse(raw); } catch { return []; }
+    },
+  },
+  lookup: {
+    id: 'lookup',
+    label: 'Lookup',
+    description: 'Value from linked record',
+    icon: 'Search',
+    category: 'computed',
+    configSchema: lookupConfigSchema,
+    defaultValue: () => '',
+    validate: () => true,
+    formatValue: (value) => String(value ?? ''),
+    parseValue: (raw) => raw,
+  },
+  rollup: {
+    id: 'rollup',
+    label: 'Rollup',
+    description: 'Aggregate linked record values',
+    icon: 'Sigma',
+    category: 'computed',
+    configSchema: rollupConfigSchema,
+    defaultValue: () => 0,
     validate: () => true,
     formatValue: (value) => String(value ?? ''),
     parseValue: (raw) => raw,

@@ -23,8 +23,17 @@ function ExportMenu({ records, filteredRecords }: ExportMenuProps) {
         setOpen(false);
       }
     };
-    if (open) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [open]);
 
   const dataToExport = exportScope === 'filtered' ? filteredRecords : records;
@@ -105,7 +114,7 @@ function ExportMenu({ records, filteredRecords }: ExportMenuProps) {
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-md)] shadow-[var(--shadow-md)] z-50 min-w-[200px] py-1">
+        <div className="absolute top-full right-0 mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-md)] shadow-[var(--shadow-md)] z-50 min-w-[200px] py-1" role="menu" aria-label="Export options">
           {/* Export scope */}
           {hasFilter && (
             <>
@@ -114,6 +123,8 @@ function ExportMenu({ records, filteredRecords }: ExportMenuProps) {
               </div>
               <button
                 onClick={() => setExportScope('filtered')}
+                role="menuitemradio"
+                aria-checked={exportScope === 'filtered'}
                 className={cn(
                   'w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)] flex items-center gap-2',
                   exportScope === 'filtered' && 'text-[var(--primary)] font-medium',
@@ -126,6 +137,8 @@ function ExportMenu({ records, filteredRecords }: ExportMenuProps) {
               </button>
               <button
                 onClick={() => setExportScope('all')}
+                role="menuitemradio"
+                aria-checked={exportScope === 'all'}
                 className={cn(
                   'w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)] flex items-center gap-2',
                   exportScope === 'all' && 'text-[var(--primary)] font-medium',
@@ -147,6 +160,7 @@ function ExportMenu({ records, filteredRecords }: ExportMenuProps) {
           <button
             onClick={handleExportCSV}
             disabled={exporting === 'csv'}
+            role="menuitem"
             className="w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)] flex items-center gap-2"
           >
             {exporting === 'csv' ? (
@@ -162,6 +176,7 @@ function ExportMenu({ records, filteredRecords }: ExportMenuProps) {
           <button
             onClick={handleExportJSON}
             disabled={exporting === 'json'}
+            role="menuitem"
             className="w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)] flex items-center gap-2"
           >
             {exporting === 'json' ? (
@@ -178,6 +193,7 @@ function ExportMenu({ records, filteredRecords }: ExportMenuProps) {
           <button
             onClick={handleCopyClipboard}
             disabled={exporting === 'clipboard'}
+            role="menuitem"
             className="w-full text-left px-3 py-1.5 text-[13px] hover:bg-[var(--surface-hover)] flex items-center gap-2"
           >
             {copied ? (

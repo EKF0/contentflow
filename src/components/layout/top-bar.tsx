@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { ASSIGNEES } from '@/types';
 import { AvatarStack } from '@/components/ui/avatar';
 
-function TopBar({ className }: { className?: string }) {
+function TopBar({ className, onMenuClick }: { className?: string; onMenuClick?: () => void }) {
   return (
     <header
       className={cn(
@@ -12,8 +12,23 @@ function TopBar({ className }: { className?: string }) {
         className,
       )}
     >
+      {/* Mobile menu button */}
+      {onMenuClick && (
+        <button
+          onClick={onMenuClick}
+          className="md:hidden flex items-center justify-center w-8 h-8 rounded-[var(--radius-sm)] hover:bg-[var(--surface)]"
+          aria-label="Open menu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      )}
+
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1.5 text-[13px] text-[var(--fg-weak)]">
+      <nav className="flex items-center gap-1.5 text-[13px] text-[var(--fg-weak)]" aria-label="Breadcrumb">
         <span>ContentFlow</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3">
           <polyline points="9,18 15,12 9,6" />
